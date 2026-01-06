@@ -4,7 +4,7 @@
  * Used in conjunction with the libxlsxwriter library.
  *
  * SPDX-License-Identifier: BSD-2-Clause
- * Copyright 2014-2025, John McNamara, jmcnamara@cpan.org.
+ * Copyright 2014-2026, John McNamara, jmcnamara@cpan.org.
  *
  */
 
@@ -548,7 +548,7 @@ _write_font(lxw_styles *self, lxw_format *format, uint8_t is_dxf,
             _write_font_charset(self, format->font_charset);
 
         /* Only write the scheme element for the default font type if it
-         * is a hyperlink. */
+         * isn't a hyperlink. */
         if ((!*format->font_name
              || strcmp(LXW_DEFAULT_FONT_NAME, format->font_name) == 0)
             && !format->hyperlink) {

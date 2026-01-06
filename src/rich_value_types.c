@@ -3,7 +3,7 @@
  *
  * Used in conjunction with the libxlsxwriter library.
  *
- * Copyright 2014-2025, John McNamara, jmcnamara@cpan.org. See LICENSE.txt.
+ * Copyright 2014-2026, John McNamara, jmcnamara@cpan.org. See LICENSE.txt.
  *
  */
 

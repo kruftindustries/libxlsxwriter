@@ -1,4 +1,4 @@
-#  :copyright: 2014-2025. John McNamara, Alex Huszagh.
+#  :copyright: 2014-2026. John McNamara, Alex Huszagh.
 #  :license: SPDX-License-Identifier: BSD-2-Clause
 
 # CMake file for libxlsxwriter
