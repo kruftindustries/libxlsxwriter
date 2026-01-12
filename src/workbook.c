@@ -1038,6 +1038,8 @@ _add_chart_cache_data(lxw_workbook *self)
         _populate_range(self, chart->title.range);
         _populate_range(self, chart->x_axis->title.range);
         _populate_range(self, chart->y_axis->title.range);
+        _populate_range(self, chart->x2_axis->title.range);
+        _populate_range(self, chart->y2_axis->title.range);
 
         if (STAILQ_EMPTY(chart->series_list))
             continue;
