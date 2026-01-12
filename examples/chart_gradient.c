@@ -2,7 +2,7 @@
  * An example of creating an Excel column chart with gradient fills using
  * libxlsxwriter.
  *
- * Copyright 2014-2025, John McNamara, jmcnamara@cpan.org
+ * Copyright 2014-2026, John McNamara, jmcnamara@cpan.org
  *
  */
 

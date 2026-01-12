@@ -6,7 +6,7 @@
  * on the same chart. The secondary Y axis appears on the right side of the
  * chart.
  *
- * Copyright 2014-2025, John McNamara, jmcnamara@cpan.org
+ * Copyright 2014-2026, John McNamara, jmcnamara@cpan.org
  *
  */
 

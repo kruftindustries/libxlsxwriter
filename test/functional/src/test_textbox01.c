@@ -4,7 +4,7 @@
  * Test case for textbox functionality.
  *
  * SPDX-License-Identifier: BSD-2-Clause
- * Copyright 2014-2025, John McNamara, jmcnamara@cpan.org.
+ * Copyright 2014-2026, John McNamara, jmcnamara@cpan.org.
  *
  */
 

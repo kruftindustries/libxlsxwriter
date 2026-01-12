@@ -5,7 +5,7 @@
  * Checkboxes in Excel are a feature of Excel 365 versions from 2024 onwards.
  * They are boolean values displayed as checkboxes in the cells.
  *
- * Copyright 2014-2025, John McNamara, jmcnamara@cpan.org
+ * Copyright 2014-2026, John McNamara, jmcnamara@cpan.org
  *
  */
 

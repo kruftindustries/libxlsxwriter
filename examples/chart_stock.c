@@ -4,7 +4,7 @@
  * Stock charts display High-Low-Close data and are suitable for financial
  * and other data that shows variation over time.
  *
- * Copyright 2014-2025, John McNamara, jmcnamara@cpan.org
+ * Copyright 2014-2026, John McNamara, jmcnamara@cpan.org
  *
  */
 
