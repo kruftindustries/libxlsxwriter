@@ -406,6 +406,11 @@ if(MSVC AND MSVC_VERSION GREATER_EQUAL 1900)
     target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
 endif()
 
+# Ensure MSVC uses C11 standard for variadic macro support (__VA_ARGS__).
+if(MSVC AND MSVC_VERSION GREATER_EQUAL 1928)
+    target_compile_options(${PROJECT_NAME} PRIVATE /std:c11)
+endif()
+
 if(WINDOWSSTORE)
     target_compile_definitions(
         ${PROJECT_NAME}
@@ -431,6 +436,10 @@ macro(create_test sources target)
     add_executable(${output_name} ${${sources}})
     target_link_libraries(${output_name} ${PROJECT_NAME})
     target_compile_definitions(${output_name} PRIVATE TESTING COLOR_OK)
+    # Ensure MSVC uses C11 standard for variadic macro support.
+    if(MSVC AND MSVC_VERSION GREATER_EQUAL 1928)
+        target_compile_options(${output_name} PRIVATE /std:c11)
+    endif()
     add_test(
         NAME ${output_name}
         COMMAND ${output_name}
@@ -496,6 +505,10 @@ if(BUILD_TESTS)
         get_filename_component(basename ${source} NAME_WE)
         add_executable(${basename} ${source})
         target_link_libraries(${basename} xlsxwriter)
+        # Ensure MSVC uses C11 standard for variadic macro support.
+        if(MSVC AND MSVC_VERSION GREATER_EQUAL 1928)
+            target_compile_options(${basename} PRIVATE /std:c11)
+        endif()
         set_target_properties(
             ${basename}
             PROPERTIES RUNTIME_OUTPUT_DIRECTORY "test/functional/src"
@@ -536,6 +549,10 @@ if(BUILD_EXAMPLES)
         get_filename_component(basename ${source} NAME_WE)
         add_executable(${basename} ${source})
         target_link_libraries(${basename} ${PROJECT_NAME})
+        # Ensure MSVC uses C11 standard for variadic macro support.
+        if(MSVC AND MSVC_VERSION GREATER_EQUAL 1928)
+            target_compile_options(${basename} PRIVATE /std:c11)
+        endif()
         set_target_properties(
             ${basename}
             PROPERTIES RUNTIME_OUTPUT_DIRECTORY "examples"
