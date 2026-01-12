@@ -485,7 +485,13 @@ typedef enum lxw_chart_axis_type {
     LXW_CHART_AXIS_TYPE_X,
 
     /** Chart Y axis. */
-    LXW_CHART_AXIS_TYPE_Y
+    LXW_CHART_AXIS_TYPE_Y,
+
+    /** Chart secondary X axis. */
+    LXW_CHART_AXIS_TYPE_X2,
+
+    /** Chart secondary Y axis. */
+    LXW_CHART_AXIS_TYPE_Y2
 } lxw_chart_axis_type;
 
 enum lxw_chart_subtype {
@@ -1083,6 +1089,10 @@ typedef struct lxw_chart_series {
     lxw_chart_line *trendline_line;
     double trendline_intercept;
 
+    /* Secondary axis flags. */
+    uint8_t x2_axis;
+    uint8_t y2_axis;
+
     STAILQ_ENTRY (lxw_chart_series) list_pointers;
 
 } lxw_chart_series;
@@ -1185,6 +1195,18 @@ typedef struct lxw_chart {
      */
     lxw_chart_axis *y_axis;
 
+    /**
+     * A pointer to the chart secondary x2_axis object which can be used in
+     * functions that configure the secondary X axis.
+     */
+    lxw_chart_axis *x2_axis;
+
+    /**
+     * A pointer to the chart secondary y2_axis object which can be used in
+     * functions that configure the secondary Y axis.
+     */
+    lxw_chart_axis *y2_axis;
+
     lxw_chart_title title;
 
     uint32_t id;
@@ -1192,6 +1214,8 @@ typedef struct lxw_chart {
     uint32_t axis_id_2;
     uint32_t axis_id_3;
     uint32_t axis_id_4;
+
+    uint8_t has_secondary_axis;
 
     uint8_t in_use;
     uint8_t chart_group;
@@ -1278,6 +1302,8 @@ void lxw_chart_assemble_xml_file(lxw_chart *chart);
  * @param chart      Pointer to a lxw_chart instance to be configured.
  * @param categories The range of categories in the data series.
  * @param values     The range of values in the data series.
+ * @param y2_axis    (Optional) Set to 1 (LXW_TRUE) to plot the series on the
+ *                   secondary Y axis. Defaults to 0 (primary axis) if omitted.
  *
  * @return A lxw_chart_series object pointer.
  *
@@ -1289,7 +1315,11 @@ void lxw_chart_assemble_xml_file(lxw_chart *chart);
  * used to set the categories and values of the series:
  *
  * @code
+ *     // Add series on primary Y axis (y2_axis parameter is optional).
  *     chart_add_series(chart, "=Sheet1!$A$2:$A$7", "=Sheet1!$C$2:$C$7");
+ *
+ *     // Add series on secondary Y axis (explicit y2_axis = 1).
+ *     chart_add_series(chart, "=Sheet1!$A$2:$A$7", "=Sheet1!$D$2:$D$7", 1);
  * @endcode
  *
  *
@@ -1308,6 +1338,10 @@ void lxw_chart_assemble_xml_file(lxw_chart *chart);
  *  - `values`: This is the most important property of a series and is the
  *    only mandatory option for every chart object. This parameter links the
  *    chart with the worksheet data that it displays.
+ *
+ *  - `y2_axis`: (Optional) Set to 1 to plot the series on the secondary Y
+ *    axis (Y2). Defaults to 0 (primary axis) if omitted. The secondary axis
+ *    appears on the right side of the chart and can have a different scale.
  *
  * The `categories` and `values` should be a string formula like
  * `"=Sheet1!$A$2:$A$7"` in the same way it is represented in Excel. This is
@@ -1350,9 +1384,30 @@ void lxw_chart_assemble_xml_file(lxw_chart *chart);
  * @endcode
  *
  */
-lxw_chart_series *chart_add_series(lxw_chart *chart,
-                                   const char *categories,
-                                   const char *values);
+lxw_chart_series *chart_add_series_impl(lxw_chart *chart,
+                                        const char *categories,
+                                        const char *values, uint8_t y2_axis);
+
+/**
+ * @brief Macro wrapper for chart_add_series_impl with optional y2_axis parameter.
+ *
+ * This macro provides backward compatibility by defaulting y2_axis to 0
+ * (primary axis) when not specified.
+ *
+ * Usage:
+ * @code
+ *     // 3 arguments (y2_axis defaults to 0):
+ *     chart_add_series(chart, NULL, "=Sheet1!$A$1:$A$5");
+ *
+ *     // 4 arguments (explicit y2_axis):
+ *     chart_add_series(chart, NULL, "=Sheet1!$A$1:$A$5", 1);
+ * @endcode
+ */
+#define chart_add_series(...) \
+    _LXW_CHART_ADD_SERIES(__VA_ARGS__, 0)
+
+#define _LXW_CHART_ADD_SERIES(chart, categories, values, y2_axis, ...) \
+    chart_add_series_impl((chart), (categories), (values), (y2_axis))
 
 /**
  * @brief Set a series "categories" range using row and column values.
@@ -3866,6 +3921,50 @@ void chart_set_series_overlap(lxw_chart *chart, int8_t overlap);
  * This option is only available for Bar/Column charts.
  */
 void chart_set_series_gap(lxw_chart *chart, uint16_t gap);
+
+/**
+ * @brief Set the overlap between series in a Bar/Column chart for the
+ *        secondary axis.
+ *
+ * @param chart   Pointer to a lxw_chart instance to be configured.
+ * @param overlap The overlap between the series. -100 to 100.
+ *
+ * The `%chart_set_series_overlap_y2()` function sets the overlap between
+ * series in Bar and Column charts for the secondary axis. It is identical
+ * to `chart_set_series_overlap()` but applies to the secondary Y axis.
+ *
+ * @code
+ *     chart_set_series_overlap_y2(chart, -27);
+ * @endcode
+ *
+ * The overlap value must be in the range `-100 <= overlap <= 100`.
+ * The default value is 0.
+ *
+ * This option is only available for Bar/Column charts with a secondary axis.
+ */
+void chart_set_series_overlap_y2(lxw_chart *chart, int8_t overlap);
+
+/**
+ * @brief Set the gap between series in a Bar/Column chart for the
+ *        secondary axis.
+ *
+ * @param chart Pointer to a lxw_chart instance to be configured.
+ * @param gap   The gap between the series. 0 to 500.
+ *
+ * The `%chart_set_series_gap_y2()` function sets the gap between series in
+ * Bar and Column charts for the secondary axis. It is identical to
+ * `chart_set_series_gap()` but applies to the secondary Y axis.
+ *
+ * @code
+ *     chart_set_series_gap_y2(chart, 251);
+ * @endcode
+ *
+ * The gap value must be in the range `0 <= gap <= 500`. The default value
+ * is 150.
+ *
+ * This option is only available for Bar/Column charts with a secondary axis.
+ */
+void chart_set_series_gap_y2(lxw_chart *chart, uint16_t gap);
 
 /**
  * @brief Set the option for displaying blank data in a chart.

@@ -216,6 +216,10 @@ lxw_chart_free(lxw_chart *chart)
     _chart_free_axis(chart->x_axis);
     _chart_free_axis(chart->y_axis);
 
+    /* Secondary X2 and Y2 Axis. */
+    _chart_free_axis(chart->x2_axis);
+    _chart_free_axis(chart->y2_axis);
+
     /* Chart title. */
     _chart_free_font(chart->title.font);
     _chart_free_range(chart->title.range);
@@ -270,6 +274,12 @@ lxw_chart_new(uint8_t type)
     chart->y_axis = calloc(1, sizeof(struct lxw_chart_axis));
     GOTO_LABEL_ON_MEM_ERROR(chart->y_axis, mem_error);
 
+    chart->x2_axis = calloc(1, sizeof(struct lxw_chart_axis));
+    GOTO_LABEL_ON_MEM_ERROR(chart->x2_axis, mem_error);
+
+    chart->y2_axis = calloc(1, sizeof(struct lxw_chart_axis));
+    GOTO_LABEL_ON_MEM_ERROR(chart->y2_axis, mem_error);
+
     chart->title.range = calloc(1, sizeof(lxw_series_range));
     GOTO_LABEL_ON_MEM_ERROR(chart->title.range, mem_error);
 
@@ -278,6 +288,12 @@ lxw_chart_new(uint8_t type)
 
     chart->y_axis->title.range = calloc(1, sizeof(lxw_series_range));
     GOTO_LABEL_ON_MEM_ERROR(chart->y_axis->title.range, mem_error);
+
+    chart->x2_axis->title.range = calloc(1, sizeof(lxw_series_range));
+    GOTO_LABEL_ON_MEM_ERROR(chart->x2_axis->title.range, mem_error);
+
+    chart->y2_axis->title.range = calloc(1, sizeof(lxw_series_range));
+    GOTO_LABEL_ON_MEM_ERROR(chart->y2_axis->title.range, mem_error);
 
     /* Initialize the ranges in the chart titles. */
     if (_chart_init_data_cache(chart->title.range) != LXW_NO_ERROR)
@@ -289,6 +305,12 @@ lxw_chart_new(uint8_t type)
     if (_chart_init_data_cache(chart->y_axis->title.range) != LXW_NO_ERROR)
         goto mem_error;
 
+    if (_chart_init_data_cache(chart->x2_axis->title.range) != LXW_NO_ERROR)
+        goto mem_error;
+
+    if (_chart_init_data_cache(chart->y2_axis->title.range) != LXW_NO_ERROR)
+        goto mem_error;
+
     chart->type = type;
     chart->style_id = 2;
     chart->hole_size = 50;
@@ -297,12 +319,22 @@ lxw_chart_new(uint8_t type)
     chart->x_axis->axis_position = LXW_CHART_AXIS_BOTTOM;
     chart->y_axis->axis_position = LXW_CHART_AXIS_LEFT;
 
+    /* Set the default secondary axis positions and properties. */
+    chart->x2_axis->axis_position = LXW_CHART_AXIS_BOTTOM;      /* Same as primary X axis */
+    chart->y2_axis->axis_position = LXW_CHART_AXIS_RIGHT;
+    chart->x2_axis->hidden = LXW_TRUE;  /* Secondary X axis hidden by default */
+    chart->y2_axis->crossing_max = LXW_TRUE;    /* Secondary Y axis crosses at max */
+
     /* Set the default axis number formats. */
     _chart_axis_set_default_num_format(chart->x_axis, "General");
     _chart_axis_set_default_num_format(chart->y_axis, "General");
+    _chart_axis_set_default_num_format(chart->x2_axis, "General");
+    _chart_axis_set_default_num_format(chart->y2_axis, "General");
 
     chart->x_axis->major_gridlines.visible = LXW_FALSE;
     chart->y_axis->major_gridlines.visible = LXW_TRUE;
+    chart->x2_axis->major_gridlines.visible = LXW_FALSE;
+    chart->y2_axis->major_gridlines.visible = LXW_FALSE;
 
     chart->has_horiz_cat_axis = LXW_FALSE;
     chart->has_horiz_val_axis = LXW_TRUE;
@@ -4590,6 +4622,143 @@ _chart_write_cat_val_axis(lxw_chart *self)
 }
 
 /*
+ * Write the <c:valAx> element for a secondary axis (Y2).
+ */
+STATIC void
+_chart_write_val_axis_2(lxw_chart *self)
+{
+    /* Don't write if no secondary axis_id. */
+    if (!self->axis_id_3)
+        return;
+
+    lxw_xml_start_tag(self->file, "c:valAx", NULL);
+
+    _chart_write_axis_id(self, self->axis_id_4);
+
+    /* Write the c:scaling element. */
+    _chart_write_scaling(self,
+                         self->y2_axis->reverse,
+                         self->y2_axis->has_min, self->y2_axis->min,
+                         self->y2_axis->has_max, self->y2_axis->max,
+                         self->y2_axis->log_base);
+
+    /* Write the c:delete element to hide axis. */
+    if (self->y2_axis->hidden)
+        _chart_write_delete(self);
+
+    /* Write the c:axPos element. */
+    _chart_write_axis_pos(self, self->y2_axis->axis_position,
+                          self->x2_axis->reverse);
+
+    /* Write the c:majorGridlines element. */
+    _chart_write_major_gridlines(self, self->y2_axis);
+
+    /* Write the c:minorGridlines element. */
+    _chart_write_minor_gridlines(self, self->y2_axis);
+
+    /* Write the axis title elements. */
+    self->y2_axis->title.is_horizontal = !self->has_horiz_val_axis;
+    _chart_write_title(self, &self->y2_axis->title);
+
+    /* Write the c:numFmt element. */
+    _chart_write_number_format(self, self->y2_axis);
+
+    /* Write the c:majorTickMark element. */
+    _chart_write_major_tick_mark(self, self->y2_axis);
+
+    /* Write the c:minorTickMark element. */
+    _chart_write_minor_tick_mark(self, self->y2_axis);
+
+    /* Write the c:tickLblPos element. */
+    _chart_write_tick_label_pos(self, self->y2_axis);
+
+    /* Write the c:spPr element for the axis line. */
+    _chart_write_sp_pr(self, self->y2_axis->line, self->y2_axis->fill,
+                       self->y2_axis->pattern);
+
+    /* Write the axis font elements. */
+    _chart_write_axis_font(self, self->y2_axis->num_font);
+
+    /* Write the c:crossAx element. */
+    _chart_write_cross_axis(self, self->axis_id_3);
+
+    /* Write the c:crosses element. */
+    if (!self->x2_axis->has_crossing || self->x2_axis->crossing_min
+        || self->x2_axis->crossing_max)
+        _chart_write_crosses(self, self->x2_axis);
+    else
+        _chart_write_crosses_at(self, self->x2_axis);
+
+    /* Write the c:crossBetween element. */
+    _chart_write_cross_between(self, self->x2_axis->position_axis);
+
+    /* Write the c:majorUnit element. */
+    _chart_write_major_unit(self, self->y2_axis);
+
+    /* Write the c:minorUnit element. */
+    _chart_write_minor_unit(self, self->y2_axis);
+
+    /* Write the c:dispUnits element. */
+    _chart_write_disp_units(self, self->y2_axis);
+
+    lxw_xml_end_tag(self->file, "c:valAx");
+}
+
+/*
+ * Write the <c:catAx> element for a secondary axis (X2).
+ */
+STATIC void
+_chart_write_cat_axis_2(lxw_chart *self)
+{
+    /* Don't write if no secondary axis_id. */
+    if (!self->axis_id_3)
+        return;
+
+    lxw_xml_start_tag(self->file, "c:catAx", NULL);
+
+    _chart_write_axis_id(self, self->axis_id_3);
+
+    /* Write the c:scaling element. */
+    _chart_write_scaling(self,
+                         self->x2_axis->reverse,
+                         self->x2_axis->has_min, self->x2_axis->min,
+                         self->x2_axis->has_max, self->x2_axis->max,
+                         self->x2_axis->log_base);
+
+    /* Write the c:delete element to hide axis. */
+    if (self->x2_axis->hidden)
+        _chart_write_delete(self);
+
+    /* Write the c:axPos element. */
+    _chart_write_axis_pos(self, self->x2_axis->axis_position,
+                          self->y2_axis->reverse);
+
+    /* Write the c:tickLblPos element. */
+    _chart_write_tick_label_pos(self, self->x2_axis);
+
+    /* Write the c:crossAx element. */
+    _chart_write_cross_axis(self, self->axis_id_4);
+
+    /* Write the c:crosses element. */
+    if (!self->y2_axis->has_crossing || self->y2_axis->crossing_min
+        || self->y2_axis->crossing_max)
+        _chart_write_crosses(self, self->y2_axis);
+    else
+        _chart_write_crosses_at(self, self->y2_axis);
+
+    /* Write the c:auto element. */
+    _chart_write_auto(self);
+
+    /* Write the c:lblAlgn element. */
+    _chart_write_label_align(self, self->x2_axis);
+
+    /* Write the c:lblOffset element. */
+    _chart_write_label_offset(self);
+
+    lxw_xml_end_tag(self->file, "c:catAx");
+}
+
+/*
  * Write the <c:barDir> element.
  */
 STATIC void
@@ -4886,6 +5055,12 @@ _chart_write_scatter_plot_area(lxw_chart *self)
     /* Write the c:valAx element. */
     _chart_write_val_axis(self);
 
+    /* Write the secondary c:valAx element. */
+    _chart_write_val_axis_2(self);
+
+    /* Write the secondary c:catAx element. */
+    _chart_write_cat_axis_2(self);
+
     /* Write the c:spPr element for the plotarea formatting. */
     _chart_write_sp_pr(self, self->plotarea_line, self->plotarea_fill,
                        self->plotarea_pattern);
@@ -4936,6 +5111,12 @@ _chart_write_plot_area(lxw_chart *self)
 
     /* Write the c:valAx element. */
     _chart_write_val_axis(self);
+
+    /* Write the secondary c:valAx element. */
+    _chart_write_val_axis_2(self);
+
+    /* Write the secondary c:catAx element. */
+    _chart_write_cat_axis_2(self);
 
     /* Write the c:dTable element. */
     _chart_write_d_table(self);
@@ -5318,7 +5499,8 @@ lxw_chart_add_data_cache(lxw_series_range *range, uint8_t *data,
  * Add a series to the chart.
  */
 lxw_chart_series *
-chart_add_series(lxw_chart *self, const char *categories, const char *values)
+chart_add_series_impl(lxw_chart *self, const char *categories,
+                      const char *values, uint8_t y2_axis)
 {
     lxw_chart_series *series;
 
@@ -5383,6 +5565,12 @@ chart_add_series(lxw_chart *self, const char *categories, const char *values)
     series->x_error_bars->is_x = LXW_TRUE;
 
     series->default_label_position = self->default_label_position;
+
+    /* Set the secondary axis flag. */
+    series->y2_axis = y2_axis;
+    if (y2_axis) {
+        self->has_secondary_axis = LXW_TRUE;
+    }
 
     STAILQ_INSERT_TAIL(self->series_list, series, list_pointers);
 
@@ -6175,6 +6363,10 @@ chart_axis_get(lxw_chart *self, lxw_chart_axis_type axis_type)
         return self->x_axis;
     else if (axis_type == LXW_CHART_AXIS_TYPE_Y)
         return self->y_axis;
+    else if (axis_type == LXW_CHART_AXIS_TYPE_X2)
+        return self->x2_axis;
+    else if (axis_type == LXW_CHART_AXIS_TYPE_Y2)
+        return self->y2_axis;
     else
         return NULL;
 }
@@ -7021,6 +7213,33 @@ chart_set_series_gap(lxw_chart *self, uint16_t gap)
         self->gap_y1 = gap;
     else
         LXW_WARN_FORMAT1("chart_set_series_gap(): Chart series gap '%d' "
+                         "outside Excel range: 0 <= gap <= 500", gap);
+}
+
+/*
+ * Set the Bar/Column overlap for secondary axis data series.
+ */
+void
+chart_set_series_overlap_y2(lxw_chart *self, int8_t overlap)
+{
+    if (overlap >= -100 && overlap <= 100)
+        self->overlap_y2 = overlap;
+    else
+        LXW_WARN_FORMAT1
+            ("chart_set_series_overlap_y2(): Chart series overlap "
+             "'%d' outside Excel range: -100 <= overlap <= 100", overlap);
+}
+
+/*
+ * Set the Bar/Column gap for secondary axis data series.
+ */
+void
+chart_set_series_gap_y2(lxw_chart *self, uint16_t gap)
+{
+    if (gap <= 500)
+        self->gap_y2 = gap;
+    else
+        LXW_WARN_FORMAT1("chart_set_series_gap_y2(): Chart series gap '%d' "
                          "outside Excel range: 0 <= gap <= 500", gap);
 }
 
