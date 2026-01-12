@@ -61,6 +61,7 @@ pub fn build(b: *std.Build) void {
             "src/rich_value_rel.c",
             "src/rich_value_structure.c",
             "src/rich_value_types.c",
+            "src/feature_property_bag.c",
         },
         .flags = cflags,
     });
