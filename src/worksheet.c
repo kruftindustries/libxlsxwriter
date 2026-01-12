@@ -12,6 +12,13 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#include <math.h>
+
+/* Portable isfinite() for C89 compatibility. */
+#ifndef isfinite
+#define isfinite(x) ((x) == (x) && (x) < HUGE_VAL && (x) > -HUGE_VAL)
+#endif
+
 #include "xlsxwriter/xmlwriter.h"
 #include "xlsxwriter/worksheet.h"
 #include "xlsxwriter/format.h"
@@ -31,6 +38,11 @@
 #define LXW_VALIDATION_MAX_TITLE_LENGTH  32
 #define LXW_VALIDATION_MAX_STRING_LENGTH 255
 #define LXW_THIS_ROW "[#This Row],"
+
+/* Excel scale limits for chart/image objects. */
+#define LXW_OBJECT_MAX_SIZE_PIXELS 225408.0     /* Excel max: 2348 inches * 96 DPI */
+#define LXW_OBJECT_MIN_SCALE       0.01 /* Excel min: 1% */
+
 /*
  * Forward declarations.
  */
@@ -3138,11 +3150,55 @@ _get_comment_params(lxw_vml_obj *comment, lxw_comment_options *options)
         if (options->height > 0.0)
             height = options->height;
 
-        if (options->x_scale > 0.0)
-            x_scale = options->x_scale;
+        if (options->x_scale > 0.0) {
+            double max_x_scale = LXW_OBJECT_MAX_SIZE_PIXELS / width;
+            if (!isfinite(options->x_scale)) {
+                LXW_WARN_FORMAT2("worksheet: x_scale value %g is not finite. "
+                                 "Clamping to %.2f.",
+                                 options->x_scale, max_x_scale);
+                x_scale = max_x_scale;
+            }
+            else if (options->x_scale > max_x_scale) {
+                LXW_WARN_FORMAT2("worksheet: x_scale value %g exceeds Excel "
+                                 "maximum. Clamping to %.2f.",
+                                 options->x_scale, max_x_scale);
+                x_scale = max_x_scale;
+            }
+            else if (options->x_scale < LXW_OBJECT_MIN_SCALE) {
+                LXW_WARN_FORMAT2("worksheet: x_scale value %g is below Excel "
+                                 "minimum. Clamping to %.2f.",
+                                 options->x_scale, LXW_OBJECT_MIN_SCALE);
+                x_scale = LXW_OBJECT_MIN_SCALE;
+            }
+            else {
+                x_scale = options->x_scale;
+            }
+        }
 
-        if (options->y_scale > 0.0)
-            y_scale = options->y_scale;
+        if (options->y_scale > 0.0) {
+            double max_y_scale = LXW_OBJECT_MAX_SIZE_PIXELS / height;
+            if (!isfinite(options->y_scale)) {
+                LXW_WARN_FORMAT2("worksheet: y_scale value %g is not finite. "
+                                 "Clamping to %.2f.",
+                                 options->y_scale, max_y_scale);
+                y_scale = max_y_scale;
+            }
+            else if (options->y_scale > max_y_scale) {
+                LXW_WARN_FORMAT2("worksheet: y_scale value %g exceeds Excel "
+                                 "maximum. Clamping to %.2f.",
+                                 options->y_scale, max_y_scale);
+                y_scale = max_y_scale;
+            }
+            else if (options->y_scale < LXW_OBJECT_MIN_SCALE) {
+                LXW_WARN_FORMAT2("worksheet: y_scale value %g is below Excel "
+                                 "minimum. Clamping to %.2f.",
+                                 options->y_scale, LXW_OBJECT_MIN_SCALE);
+                y_scale = LXW_OBJECT_MIN_SCALE;
+            }
+            else {
+                y_scale = options->y_scale;
+            }
+        }
 
         if (options->x_offset != 0)
             x_offset = options->x_offset;
@@ -3212,11 +3268,55 @@ _get_button_params(lxw_vml_obj *button, uint16_t button_number,
         if (options->height > 0.0)
             height = options->height;
 
-        if (options->x_scale > 0.0)
-            x_scale = options->x_scale;
+        if (options->x_scale > 0.0) {
+            double max_x_scale = LXW_OBJECT_MAX_SIZE_PIXELS / width;
+            if (!isfinite(options->x_scale)) {
+                LXW_WARN_FORMAT2("worksheet: x_scale value %g is not finite. "
+                                 "Clamping to %.2f.",
+                                 options->x_scale, max_x_scale);
+                x_scale = max_x_scale;
+            }
+            else if (options->x_scale > max_x_scale) {
+                LXW_WARN_FORMAT2("worksheet: x_scale value %g exceeds Excel "
+                                 "maximum. Clamping to %.2f.",
+                                 options->x_scale, max_x_scale);
+                x_scale = max_x_scale;
+            }
+            else if (options->x_scale < LXW_OBJECT_MIN_SCALE) {
+                LXW_WARN_FORMAT2("worksheet: x_scale value %g is below Excel "
+                                 "minimum. Clamping to %.2f.",
+                                 options->x_scale, LXW_OBJECT_MIN_SCALE);
+                x_scale = LXW_OBJECT_MIN_SCALE;
+            }
+            else {
+                x_scale = options->x_scale;
+            }
+        }
 
-        if (options->y_scale > 0.0)
-            y_scale = options->y_scale;
+        if (options->y_scale > 0.0) {
+            double max_y_scale = LXW_OBJECT_MAX_SIZE_PIXELS / height;
+            if (!isfinite(options->y_scale)) {
+                LXW_WARN_FORMAT2("worksheet: y_scale value %g is not finite. "
+                                 "Clamping to %.2f.",
+                                 options->y_scale, max_y_scale);
+                y_scale = max_y_scale;
+            }
+            else if (options->y_scale > max_y_scale) {
+                LXW_WARN_FORMAT2("worksheet: y_scale value %g exceeds Excel "
+                                 "maximum. Clamping to %.2f.",
+                                 options->y_scale, max_y_scale);
+                y_scale = max_y_scale;
+            }
+            else if (options->y_scale < LXW_OBJECT_MIN_SCALE) {
+                LXW_WARN_FORMAT2("worksheet: y_scale value %g is below Excel "
+                                 "minimum. Clamping to %.2f.",
+                                 options->y_scale, LXW_OBJECT_MIN_SCALE);
+                y_scale = LXW_OBJECT_MIN_SCALE;
+            }
+            else {
+                y_scale = options->y_scale;
+            }
+        }
 
         if (options->x_offset != 0)
             x_offset = options->x_offset;
@@ -10537,11 +10637,39 @@ worksheet_insert_image_opt(lxw_worksheet *self,
     object_props->row = row_num;
     object_props->col = col_num;
 
-    if (object_props->x_scale == 0.0)
+    if (object_props->x_scale == 0.0) {
         object_props->x_scale = 1;
+    }
+    else if (!isfinite(object_props->x_scale)) {
+        LXW_WARN_FORMAT1("worksheet_insert_image(): x_scale value %g is not "
+                         "finite. Using default value 1.0.",
+                         object_props->x_scale);
+        object_props->x_scale = 1;
+    }
+    else if (object_props->x_scale < LXW_OBJECT_MIN_SCALE) {
+        LXW_WARN_FORMAT2
+            ("worksheet_insert_image(): x_scale value %g is below "
+             "Excel minimum. Clamping to %.2f.", object_props->x_scale,
+             LXW_OBJECT_MIN_SCALE);
+        object_props->x_scale = LXW_OBJECT_MIN_SCALE;
+    }
 
-    if (object_props->y_scale == 0.0)
+    if (object_props->y_scale == 0.0) {
         object_props->y_scale = 1;
+    }
+    else if (!isfinite(object_props->y_scale)) {
+        LXW_WARN_FORMAT1("worksheet_insert_image(): y_scale value %g is not "
+                         "finite. Using default value 1.0.",
+                         object_props->y_scale);
+        object_props->y_scale = 1;
+    }
+    else if (object_props->y_scale < LXW_OBJECT_MIN_SCALE) {
+        LXW_WARN_FORMAT2
+            ("worksheet_insert_image(): y_scale value %g is below "
+             "Excel minimum. Clamping to %.2f.", object_props->y_scale,
+             LXW_OBJECT_MIN_SCALE);
+        object_props->y_scale = LXW_OBJECT_MIN_SCALE;
+    }
 
     if (_get_image_properties(object_props) == LXW_NO_ERROR) {
         STAILQ_INSERT_TAIL(self->image_props, object_props, list_pointers);
@@ -10645,11 +10773,37 @@ worksheet_insert_image_buffer_opt(lxw_worksheet *self,
     object_props->row = row_num;
     object_props->col = col_num;
 
-    if (object_props->x_scale == 0.0)
+    if (object_props->x_scale == 0.0) {
         object_props->x_scale = 1;
+    }
+    else if (!isfinite(object_props->x_scale)) {
+        LXW_WARN_FORMAT1("worksheet_insert_image_buffer(): x_scale value %g "
+                         "is not finite. Using default value 1.0.",
+                         object_props->x_scale);
+        object_props->x_scale = 1;
+    }
+    else if (object_props->x_scale < LXW_OBJECT_MIN_SCALE) {
+        LXW_WARN_FORMAT2("worksheet_insert_image_buffer(): x_scale value %g "
+                         "is below Excel minimum. Clamping to %.2f.",
+                         object_props->x_scale, LXW_OBJECT_MIN_SCALE);
+        object_props->x_scale = LXW_OBJECT_MIN_SCALE;
+    }
 
-    if (object_props->y_scale == 0.0)
+    if (object_props->y_scale == 0.0) {
         object_props->y_scale = 1;
+    }
+    else if (!isfinite(object_props->y_scale)) {
+        LXW_WARN_FORMAT1("worksheet_insert_image_buffer(): y_scale value %g "
+                         "is not finite. Using default value 1.0.",
+                         object_props->y_scale);
+        object_props->y_scale = 1;
+    }
+    else if (object_props->y_scale < LXW_OBJECT_MIN_SCALE) {
+        LXW_WARN_FORMAT2("worksheet_insert_image_buffer(): y_scale value %g "
+                         "is below Excel minimum. Clamping to %.2f.",
+                         object_props->y_scale, LXW_OBJECT_MIN_SCALE);
+        object_props->y_scale = LXW_OBJECT_MIN_SCALE;
+    }
 
     if (_get_image_properties(object_props) == LXW_NO_ERROR) {
         STAILQ_INSERT_TAIL(self->image_props, object_props, list_pointers);
@@ -10755,11 +10909,37 @@ worksheet_embed_image_opt(lxw_worksheet *self,
     object_props->row = row_num;
     object_props->col = col_num;
 
-    if (object_props->x_scale == 0.0)
+    if (object_props->x_scale == 0.0) {
         object_props->x_scale = 1;
+    }
+    else if (!isfinite(object_props->x_scale)) {
+        LXW_WARN_FORMAT1("worksheet_embed_image(): x_scale value %g is not "
+                         "finite. Using default value 1.0.",
+                         object_props->x_scale);
+        object_props->x_scale = 1;
+    }
+    else if (object_props->x_scale < LXW_OBJECT_MIN_SCALE) {
+        LXW_WARN_FORMAT2("worksheet_embed_image(): x_scale value %g is below "
+                         "Excel minimum. Clamping to %.2f.",
+                         object_props->x_scale, LXW_OBJECT_MIN_SCALE);
+        object_props->x_scale = LXW_OBJECT_MIN_SCALE;
+    }
 
-    if (object_props->y_scale == 0.0)
+    if (object_props->y_scale == 0.0) {
         object_props->y_scale = 1;
+    }
+    else if (!isfinite(object_props->y_scale)) {
+        LXW_WARN_FORMAT1("worksheet_embed_image(): y_scale value %g is not "
+                         "finite. Using default value 1.0.",
+                         object_props->y_scale);
+        object_props->y_scale = 1;
+    }
+    else if (object_props->y_scale < LXW_OBJECT_MIN_SCALE) {
+        LXW_WARN_FORMAT2("worksheet_embed_image(): y_scale value %g is below "
+                         "Excel minimum. Clamping to %.2f.",
+                         object_props->y_scale, LXW_OBJECT_MIN_SCALE);
+        object_props->y_scale = LXW_OBJECT_MIN_SCALE;
+    }
 
     if (_get_image_properties(object_props) == LXW_NO_ERROR) {
         STAILQ_INSERT_TAIL(self->embedded_image_props, object_props,
@@ -10890,11 +11070,37 @@ worksheet_embed_image_buffer_opt(lxw_worksheet *self,
     object_props->row = row_num;
     object_props->col = col_num;
 
-    if (object_props->x_scale == 0.0)
+    if (object_props->x_scale == 0.0) {
         object_props->x_scale = 1;
+    }
+    else if (!isfinite(object_props->x_scale)) {
+        LXW_WARN_FORMAT1("worksheet_embed_image_buffer(): x_scale value %g "
+                         "is not finite. Using default value 1.0.",
+                         object_props->x_scale);
+        object_props->x_scale = 1;
+    }
+    else if (object_props->x_scale < LXW_OBJECT_MIN_SCALE) {
+        LXW_WARN_FORMAT2("worksheet_embed_image_buffer(): x_scale value %g "
+                         "is below Excel minimum. Clamping to %.2f.",
+                         object_props->x_scale, LXW_OBJECT_MIN_SCALE);
+        object_props->x_scale = LXW_OBJECT_MIN_SCALE;
+    }
 
-    if (object_props->y_scale == 0.0)
+    if (object_props->y_scale == 0.0) {
         object_props->y_scale = 1;
+    }
+    else if (!isfinite(object_props->y_scale)) {
+        LXW_WARN_FORMAT1("worksheet_embed_image_buffer(): y_scale value %g "
+                         "is not finite. Using default value 1.0.",
+                         object_props->y_scale);
+        object_props->y_scale = 1;
+    }
+    else if (object_props->y_scale < LXW_OBJECT_MIN_SCALE) {
+        LXW_WARN_FORMAT2("worksheet_embed_image_buffer(): y_scale value %g "
+                         "is below Excel minimum. Clamping to %.2f.",
+                         object_props->y_scale, LXW_OBJECT_MIN_SCALE);
+        object_props->y_scale = LXW_OBJECT_MIN_SCALE;
+    }
 
     if (_get_image_properties(object_props) == LXW_NO_ERROR) {
         STAILQ_INSERT_TAIL(self->embedded_image_props, object_props,
@@ -11113,11 +11319,62 @@ worksheet_insert_chart_opt(lxw_worksheet *self,
     object_props->width = 480;
     object_props->height = 288;
 
-    if (object_props->x_scale == 0.0)
-        object_props->x_scale = 1;
+    /* Validate scale values. Max scale is calculated from Excel's 2348" limit. */
+    {
+        double max_x_scale = LXW_OBJECT_MAX_SIZE_PIXELS / object_props->width;
+        double max_y_scale =
+            LXW_OBJECT_MAX_SIZE_PIXELS / object_props->height;
 
-    if (object_props->y_scale == 0.0)
-        object_props->y_scale = 1;
+        if (object_props->x_scale == 0.0) {
+            object_props->x_scale = 1;
+        }
+        else if (!isfinite(object_props->x_scale)) {
+            LXW_WARN_FORMAT2
+                ("worksheet_insert_chart(): x_scale value %g is not "
+                 "finite. Clamping to %.2f.", object_props->x_scale,
+                 max_x_scale);
+            object_props->x_scale = max_x_scale;
+        }
+        else if (object_props->x_scale > max_x_scale) {
+            LXW_WARN_FORMAT2
+                ("worksheet_insert_chart(): x_scale value %g exceeds "
+                 "Excel maximum. Clamping to %.2f.", object_props->x_scale,
+                 max_x_scale);
+            object_props->x_scale = max_x_scale;
+        }
+        else if (object_props->x_scale < LXW_OBJECT_MIN_SCALE) {
+            LXW_WARN_FORMAT2
+                ("worksheet_insert_chart(): x_scale value %g is below "
+                 "Excel minimum. Clamping to %.2f.", object_props->x_scale,
+                 LXW_OBJECT_MIN_SCALE);
+            object_props->x_scale = LXW_OBJECT_MIN_SCALE;
+        }
+
+        if (object_props->y_scale == 0.0) {
+            object_props->y_scale = 1;
+        }
+        else if (!isfinite(object_props->y_scale)) {
+            LXW_WARN_FORMAT2
+                ("worksheet_insert_chart(): y_scale value %g is not "
+                 "finite. Clamping to %.2f.", object_props->y_scale,
+                 max_y_scale);
+            object_props->y_scale = max_y_scale;
+        }
+        else if (object_props->y_scale > max_y_scale) {
+            LXW_WARN_FORMAT2
+                ("worksheet_insert_chart(): y_scale value %g exceeds "
+                 "Excel maximum. Clamping to %.2f.", object_props->y_scale,
+                 max_y_scale);
+            object_props->y_scale = max_y_scale;
+        }
+        else if (object_props->y_scale < LXW_OBJECT_MIN_SCALE) {
+            LXW_WARN_FORMAT2
+                ("worksheet_insert_chart(): y_scale value %g is below "
+                 "Excel minimum. Clamping to %.2f.", object_props->y_scale,
+                 LXW_OBJECT_MIN_SCALE);
+            object_props->y_scale = LXW_OBJECT_MIN_SCALE;
+        }
+    }
 
     /* Store chart references so they can be ordered in the workbook. */
     object_props->chart = chart;
