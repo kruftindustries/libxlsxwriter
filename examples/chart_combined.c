@@ -5,7 +5,7 @@
  * combined with a line chart. They can share the same Y axis or have a
  * secondary Y axis.
  *
- * Copyright 2014-2025, John McNamara, jmcnamara@cpan.org
+ * Copyright 2014-2026, John McNamara, jmcnamara@cpan.org
  *
  */
 
