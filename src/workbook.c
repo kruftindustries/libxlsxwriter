@@ -1038,6 +1038,8 @@ _add_chart_cache_data(lxw_workbook *self)
         _populate_range(self, chart->title.range);
         _populate_range(self, chart->x_axis->title.range);
         _populate_range(self, chart->y_axis->title.range);
+        _populate_range(self, chart->x2_axis->title.range);
+        _populate_range(self, chart->y2_axis->title.range);
 
         if (STAILQ_EMPTY(chart->series_list))
             continue;
@@ -1999,7 +2001,7 @@ workbook_add_worksheet(lxw_workbook *self, const char *sheetname)
     lxw_worksheet_name *worksheet_name = NULL;
     lxw_error error;
     lxw_worksheet_init_data init_data =
-        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     char *new_name = NULL;
 
     if (sheetname) {
@@ -2085,7 +2087,7 @@ workbook_add_chartsheet(lxw_workbook *self, const char *sheetname)
     lxw_chartsheet_name *chartsheet_name = NULL;
     lxw_error error;
     lxw_worksheet_init_data init_data =
-        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     char *new_name = NULL;
 
     if (sheetname) {
