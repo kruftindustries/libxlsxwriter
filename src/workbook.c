@@ -1054,6 +1054,31 @@ _add_chart_cache_data(lxw_workbook *self)
                 _populate_range(self, data_label->range);
             }
         }
+
+        /* Also populate data for combined charts. */
+        if (chart->combined) {
+            lxw_chart *combined = chart->combined;
+
+            _populate_range(self, combined->title.range);
+            _populate_range(self, combined->x_axis->title.range);
+            _populate_range(self, combined->y_axis->title.range);
+            _populate_range(self, combined->x2_axis->title.range);
+            _populate_range(self, combined->y2_axis->title.range);
+
+            if (!STAILQ_EMPTY(combined->series_list)) {
+                STAILQ_FOREACH(series, combined->series_list, list_pointers) {
+                    _populate_range(self, series->categories);
+                    _populate_range(self, series->values);
+                    _populate_range(self, series->title.range);
+
+                    for (i = 0; i < series->data_label_count; i++) {
+                        lxw_chart_custom_label *data_label =
+                            &series->data_labels[i];
+                        _populate_range(self, data_label->range);
+                    }
+                }
+            }
+        }
     }
 }
 
