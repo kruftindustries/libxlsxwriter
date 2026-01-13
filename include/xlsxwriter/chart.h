@@ -1180,7 +1180,7 @@ typedef struct lxw_chart {
     uint8_t subtype;
     uint16_t series_index;
 
-    void (*write_chart_type)(struct lxw_chart *);
+    void (*write_chart_type)(struct lxw_chart *, uint8_t primary_axes);
     void (*write_plot_area)(struct lxw_chart *);
 
     /**
@@ -1216,6 +1216,8 @@ typedef struct lxw_chart {
     uint32_t axis_id_4;
 
     uint8_t has_secondary_axis;
+    struct lxw_chart *combined;
+    uint8_t is_secondary;
 
     uint8_t in_use;
     uint8_t chart_group;
@@ -2547,6 +2549,38 @@ void chart_series_set_error_bars_endcap(lxw_series_error_bars *error_bars,
  */
 void chart_series_set_error_bars_line(lxw_series_error_bars *error_bars,
                                       lxw_chart_line *line);
+
+/**
+ * @brief Combine two charts into a single combined chart.
+ *
+ * @param chart          Pointer to the primary lxw_chart instance.
+ * @param combined_chart Pointer to the secondary lxw_chart to combine.
+ *
+ * The `%chart_combine()` function is used to combine two charts into a
+ * single chart, often with a shared category axis but different value axes.
+ * This is useful for showing two different data series with different
+ * scales on the same chart.
+ *
+ * @code
+ *     // Create primary and secondary charts.
+ *     lxw_chart *column_chart = workbook_add_chart(workbook, LXW_CHART_COLUMN);
+ *     lxw_chart *line_chart   = workbook_add_chart(workbook, LXW_CHART_LINE);
+ *
+ *     // Add data series to each chart.
+ *     chart_add_series(column_chart, NULL, "=Sheet1!$A$1:$A$5", 0);
+ *     chart_add_series(line_chart, NULL, "=Sheet1!$B$1:$B$5", 1);  // Secondary axis
+ *
+ *     // Combine the charts.
+ *     chart_combine(column_chart, line_chart);
+ *
+ *     // Insert the combined chart into the worksheet.
+ *     worksheet_insert_chart(worksheet, CELL("E2"), column_chart);
+ * @endcode
+ *
+ * Note: Only the primary chart should be inserted into the worksheet.
+ * The secondary chart is managed internally.
+ */
+void chart_combine(lxw_chart *chart, lxw_chart *combined_chart);
 
 /**
  * @brief           Get an axis pointer from a chart.
