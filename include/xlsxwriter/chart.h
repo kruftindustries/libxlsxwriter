@@ -593,6 +593,21 @@ typedef enum lxw_chart_axis_display_unit {
 } lxw_chart_axis_display_unit;
 
 /**
+ * @brief Time units for date axis major/minor units.
+ */
+typedef enum lxw_chart_axis_time_unit {
+
+    /** Time unit: Days. The default. */
+    LXW_CHART_AXIS_TIME_UNIT_DAYS,
+
+    /** Time unit: Months. */
+    LXW_CHART_AXIS_TIME_UNIT_MONTHS,
+
+    /** Time unit: Years. */
+    LXW_CHART_AXIS_TIME_UNIT_YEARS
+} lxw_chart_axis_time_unit;
+
+/**
  * @brief Tick mark types for an axis.
  */
 typedef enum lxw_chart_axis_tick_mark {
@@ -1150,6 +1165,8 @@ typedef struct lxw_chart_axis {
     double major_unit;
     uint8_t has_minor_unit;
     double minor_unit;
+    uint8_t major_unit_type;
+    uint8_t minor_unit_type;
 
     uint16_t interval_unit;
     uint16_t interval_tick;
@@ -1226,6 +1243,7 @@ typedef struct lxw_chart {
 
     uint8_t has_horiz_cat_axis;
     uint8_t has_horiz_val_axis;
+    uint8_t date_category;
 
     uint8_t style_id;
     uint16_t rotation;
@@ -3249,6 +3267,68 @@ void chart_axis_set_display_units(lxw_chart_axis *axis, uint8_t units);
  */
 void chart_axis_set_display_units_visible(lxw_chart_axis *axis,
                                           uint8_t visible);
+
+/**
+ * @brief Set the category axis as a date axis.
+ *
+ * @param axis A pointer to a chart #lxw_chart_axis object.
+ *
+ * Set the category axis type as a date axis. A date axis is similar to a
+ * category axis but it displays dates in chronological order rather than
+ * sequentially.
+ *
+ * Example:
+ *
+ * @code
+ *     chart_axis_set_date_axis(chart->x_axis);
+ * @endcode
+ *
+ * **Axis types**: This function is applicable to category axes only.
+ *                 See @ref ww_charts_axes.
+ */
+void chart_axis_set_date_axis(lxw_chart_axis *axis);
+
+/**
+ * @brief Set the time unit type for the major unit of a date axis.
+ *
+ * @param axis A pointer to a chart #lxw_chart_axis object.
+ * @param type The time unit type: #lxw_chart_axis_time_unit.
+ *
+ * Set the time unit type for the major units of a date axis. The default is
+ * LXW_CHART_AXIS_TIME_UNIT_DAYS.
+ *
+ * Example:
+ *
+ * @code
+ *     chart_axis_set_date_axis(chart->x_axis);
+ *     chart_axis_set_major_unit_type(chart->x_axis, LXW_CHART_AXIS_TIME_UNIT_MONTHS);
+ * @endcode
+ *
+ * **Axis types**: This function is applicable to date axes only.
+ *                 See @ref ww_charts_axes.
+ */
+void chart_axis_set_major_unit_type(lxw_chart_axis *axis, uint8_t type);
+
+/**
+ * @brief Set the time unit type for the minor unit of a date axis.
+ *
+ * @param axis A pointer to a chart #lxw_chart_axis object.
+ * @param type The time unit type: #lxw_chart_axis_time_unit.
+ *
+ * Set the time unit type for the minor units of a date axis. The default is
+ * LXW_CHART_AXIS_TIME_UNIT_DAYS.
+ *
+ * Example:
+ *
+ * @code
+ *     chart_axis_set_date_axis(chart->x_axis);
+ *     chart_axis_set_minor_unit_type(chart->x_axis, LXW_CHART_AXIS_TIME_UNIT_DAYS);
+ * @endcode
+ *
+ * **Axis types**: This function is applicable to date axes only.
+ *                 See @ref ww_charts_axes.
+ */
+void chart_axis_set_minor_unit_type(lxw_chart_axis *axis, uint8_t type);
 
 /**
  * @brief Turn on/off the major gridlines for an axis.

@@ -3692,6 +3692,74 @@ _chart_write_minor_unit(lxw_chart *self, lxw_chart_axis *axis)
 }
 
 /*
+ * Write the <c:majorTimeUnit> element.
+ */
+STATIC void
+_chart_write_major_time_unit(lxw_chart *self, lxw_chart_axis *axis)
+{
+    struct xml_attribute_list attributes;
+    struct xml_attribute *attribute;
+    const char *val;
+
+    if (!axis->has_major_unit)
+        return;
+
+    LXW_INIT_ATTRIBUTES();
+
+    switch (axis->major_unit_type) {
+        case LXW_CHART_AXIS_TIME_UNIT_MONTHS:
+            val = "months";
+            break;
+        case LXW_CHART_AXIS_TIME_UNIT_YEARS:
+            val = "years";
+            break;
+        default:
+            val = "days";
+            break;
+    }
+
+    LXW_PUSH_ATTRIBUTES_STR("val", val);
+
+    lxw_xml_empty_tag(self->file, "c:majorTimeUnit", &attributes);
+
+    LXW_FREE_ATTRIBUTES();
+}
+
+/*
+ * Write the <c:minorTimeUnit> element.
+ */
+STATIC void
+_chart_write_minor_time_unit(lxw_chart *self, lxw_chart_axis *axis)
+{
+    struct xml_attribute_list attributes;
+    struct xml_attribute *attribute;
+    const char *val;
+
+    if (!axis->has_minor_unit)
+        return;
+
+    LXW_INIT_ATTRIBUTES();
+
+    switch (axis->minor_unit_type) {
+        case LXW_CHART_AXIS_TIME_UNIT_MONTHS:
+            val = "months";
+            break;
+        case LXW_CHART_AXIS_TIME_UNIT_YEARS:
+            val = "years";
+            break;
+        default:
+            val = "days";
+            break;
+    }
+
+    LXW_PUSH_ATTRIBUTES_STR("val", val);
+
+    lxw_xml_empty_tag(self->file, "c:minorTimeUnit", &attributes);
+
+    LXW_FREE_ATTRIBUTES();
+}
+
+/*
  * Write the <c:dispUnits> element.
  */
 STATIC void
@@ -4491,6 +4559,90 @@ _chart_write_cat_axis(lxw_chart *self)
     _chart_write_tick_mark_skip(self, self->x_axis);
 
     lxw_xml_end_tag(self->file, "c:catAx");
+}
+
+/*
+ * Write the <c:dateAx> element.
+ */
+STATIC void
+_chart_write_date_axis(lxw_chart *self)
+{
+    lxw_xml_start_tag(self->file, "c:dateAx", NULL);
+
+    _chart_write_axis_id(self, self->axis_id_1);
+
+    /* Write the c:scaling element. */
+    _chart_write_scaling(self,
+                         self->x_axis->reverse,
+                         self->x_axis->has_min, self->x_axis->min,
+                         self->x_axis->has_max, self->x_axis->max, 0);
+
+    /* Write the c:delete element to hide axis. */
+    if (self->x_axis->hidden)
+        _chart_write_delete(self);
+
+    /* Write the c:axPos element. */
+    _chart_write_axis_pos(self, self->x_axis->axis_position,
+                          self->y_axis->reverse);
+
+    /* Write the c:majorGridlines element. */
+    _chart_write_major_gridlines(self, self->x_axis);
+
+    /* Write the c:minorGridlines element. */
+    _chart_write_minor_gridlines(self, self->x_axis);
+
+    /* Write the axis title elements. */
+    self->x_axis->title.is_horizontal = self->has_horiz_cat_axis;
+    _chart_write_title(self, &self->x_axis->title);
+
+    /* Write the c:numFmt element. */
+    _chart_write_cat_number_format(self, self->x_axis);
+
+    /* Write the c:majorTickMark element. */
+    _chart_write_major_tick_mark(self, self->x_axis);
+
+    /* Write the c:minorTickMark element. */
+    _chart_write_minor_tick_mark(self, self->x_axis);
+
+    /* Write the c:tickLblPos element. */
+    _chart_write_tick_label_pos(self, self->x_axis);
+
+    /* Write the c:spPr element for the axis line. */
+    _chart_write_sp_pr(self, self->x_axis->line, self->x_axis->fill,
+                       self->x_axis->pattern);
+
+    /* Write the axis font elements. */
+    _chart_write_axis_font(self, self->x_axis->num_font);
+
+    /* Write the c:crossAx element. */
+    _chart_write_cross_axis(self, self->axis_id_2);
+
+    /* Write the c:crosses element. */
+    if (!self->y_axis->has_crossing || self->y_axis->crossing_min
+        || self->y_axis->crossing_max)
+        _chart_write_crosses(self, self->y_axis);
+    else
+        _chart_write_crosses_at(self, self->y_axis);
+
+    /* Write the c:auto element. */
+    _chart_write_auto(self);
+
+    /* Write the c:lblOffset element. */
+    _chart_write_label_offset(self);
+
+    /* Write the c:majorUnit element. */
+    _chart_write_major_unit(self, self->x_axis);
+
+    /* Write the c:majorTimeUnit element. */
+    _chart_write_major_time_unit(self, self->x_axis);
+
+    /* Write the c:minorUnit element. */
+    _chart_write_minor_unit(self, self->x_axis);
+
+    /* Write the c:minorTimeUnit element. */
+    _chart_write_minor_time_unit(self, self->x_axis);
+
+    lxw_xml_end_tag(self->file, "c:dateAx");
 }
 
 /*
@@ -5348,8 +5500,11 @@ _chart_write_plot_area(lxw_chart *self)
     /* Reverse the opposite axis position if crossing position is "max". */
     _chart_adjust_max_crossing(self);
 
-    /* Write the c:catAx element. */
-    _chart_write_cat_axis(self);
+    /* Write the c:catAx or c:dateAx element. */
+    if (self->x_axis->is_date)
+        _chart_write_date_axis(self);
+    else
+        _chart_write_cat_axis(self);
 
     /* Write the c:valAx element. */
     _chart_write_val_axis(self);
@@ -6987,6 +7142,35 @@ chart_axis_set_display_units_visible(lxw_chart_axis *axis, uint8_t visible)
     LXW_WARN_VALUE_AXIS_ONLY("chart_axis_set_display_units");
 
     axis->display_units_visible = visible;
+}
+
+/*
+ * Set the category axis as a date axis.
+ */
+void
+chart_axis_set_date_axis(lxw_chart_axis *axis)
+{
+    LXW_WARN_CAT_AXIS_ONLY("chart_axis_set_date_axis");
+
+    axis->is_date = LXW_TRUE;
+}
+
+/*
+ * Set the time unit type for the major unit of a date axis.
+ */
+void
+chart_axis_set_major_unit_type(lxw_chart_axis *axis, uint8_t type)
+{
+    axis->major_unit_type = type;
+}
+
+/*
+ * Set the time unit type for the minor unit of a date axis.
+ */
+void
+chart_axis_set_minor_unit_type(lxw_chart_axis *axis, uint8_t type)
+{
+    axis->minor_unit_type = type;
 }
 
 /*
