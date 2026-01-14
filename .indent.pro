@@ -152,6 +152,7 @@
 -T lxw_table_column
 -T lxw_table_obj
 -T lxw_table_options
+-T lxw_textbox_options
 -T lxw_theme
 -T lxw_tuple
 -T lxw_vml

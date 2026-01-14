@@ -151,6 +151,10 @@ lxw_worksheet_new(lxw_worksheet_init_data *init_data)
     GOTO_LABEL_ON_MEM_ERROR(worksheet->chart_data, mem_error);
     STAILQ_INIT(worksheet->chart_data);
 
+    worksheet->textbox_data = calloc(1, sizeof(struct lxw_textbox_props));
+    GOTO_LABEL_ON_MEM_ERROR(worksheet->textbox_data, mem_error);
+    STAILQ_INIT(worksheet->textbox_data);
+
     worksheet->comment_objs = calloc(1, sizeof(struct lxw_comment_objs));
     GOTO_LABEL_ON_MEM_ERROR(worksheet->comment_objs, mem_error);
     STAILQ_INIT(worksheet->comment_objs);
@@ -11137,6 +11141,79 @@ worksheet_insert_chart(lxw_worksheet *self,
                        lxw_row_t row_num, lxw_col_t col_num, lxw_chart *chart)
 {
     return worksheet_insert_chart_opt(self, row_num, col_num, chart, NULL);
+}
+
+/*
+ * Insert a textbox into the worksheet, with options.
+ */
+lxw_error
+worksheet_insert_textbox_opt(lxw_worksheet *self,
+                             lxw_row_t row_num, lxw_col_t col_num,
+                             const char *text,
+                             lxw_textbox_options *user_options)
+{
+    lxw_object_properties *object_props;
+
+    if (!text) {
+        LXW_WARN("worksheet_insert_textbox()/_opt(): "
+                 "text must be specified.");
+        return LXW_ERROR_NULL_PARAMETER_IGNORED;
+    }
+
+    /* Create a new object to hold the textbox properties. */
+    object_props = calloc(1, sizeof(lxw_object_properties));
+    RETURN_ON_MEM_ERROR(object_props, LXW_ERROR_MEMORY_MALLOC_FAILED);
+
+    if (user_options) {
+        object_props->x_offset = user_options->x_offset;
+        object_props->y_offset = user_options->y_offset;
+        object_props->x_scale = user_options->x_scale;
+        object_props->y_scale = user_options->y_scale;
+        object_props->object_position = user_options->object_position;
+        object_props->description = lxw_strdup(user_options->description);
+        object_props->decorative = user_options->decorative;
+
+        if (user_options->width)
+            object_props->width = user_options->width;
+        if (user_options->height)
+            object_props->height = user_options->height;
+    }
+
+    /* Copy other options or set defaults. */
+    object_props->row = row_num;
+    object_props->col = col_num;
+    object_props->text = lxw_strdup(text);
+    object_props->is_textbox = LXW_TRUE;
+
+    /* Default textbox size is 192 x 120 pixels. */
+    if (object_props->width == 0)
+        object_props->width = 192;
+
+    if (object_props->height == 0)
+        object_props->height = 120;
+
+    if (object_props->x_scale == 0.0)
+        object_props->x_scale = 1;
+
+    if (object_props->y_scale == 0.0)
+        object_props->y_scale = 1;
+
+    STAILQ_INSERT_TAIL(self->textbox_data, object_props, list_pointers);
+
+    self->has_textboxes = LXW_TRUE;
+
+    return LXW_NO_ERROR;
+}
+
+/*
+ * Insert a textbox into the worksheet.
+ */
+lxw_error
+worksheet_insert_textbox(lxw_worksheet *self,
+                         lxw_row_t row_num, lxw_col_t col_num,
+                         const char *text)
+{
+    return worksheet_insert_textbox_opt(self, row_num, col_num, text, NULL);
 }
 
 /*
