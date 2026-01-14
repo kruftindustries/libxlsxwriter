@@ -830,3 +830,12 @@ format_set_quote_prefix(lxw_format *self)
 {
     self->quote_prefix = LXW_TRUE;
 }
+
+/*
+ * Set the checkbox property.
+ */
+void
+format_set_checkbox(lxw_format *self)
+{
+    self->checkbox = LXW_TRUE;
+}

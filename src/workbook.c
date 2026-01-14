@@ -300,8 +300,8 @@ lxw_workbook_set_default_xf_indices(lxw_workbook *self)
 
     STAILQ_FOREACH(format, self->formats, list_pointers) {
 
-        /* Skip the hyperlink format. */
-        if (index != 1)
+        /* Skip the hyperlink format (index 1) and checkbox format (index 2). */
+        if (index != 1 && index != 2)
             lxw_format_get_xf_index(format);
 
         index++;
@@ -1968,6 +1968,12 @@ workbook_new_opt(const char *filename, lxw_workbook_options *options)
     format_set_hyperlink(format);
     workbook->default_url_format = format;
 
+    /* Add the default checkbox format. */
+    format = workbook_add_format(workbook);
+    GOTO_LABEL_ON_MEM_ERROR(format, mem_error);
+    format_set_checkbox(format);
+    workbook->checkbox_format = format;
+
     if (options) {
         workbook->options.constant_memory = options->constant_memory;
         workbook->options.tmpdir = lxw_strdup(options->tmpdir);
@@ -1999,7 +2005,7 @@ workbook_add_worksheet(lxw_workbook *self, const char *sheetname)
     lxw_worksheet_name *worksheet_name = NULL;
     lxw_error error;
     lxw_worksheet_init_data init_data =
-        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     char *new_name = NULL;
 
     if (sheetname) {
@@ -2039,6 +2045,7 @@ workbook_add_worksheet(lxw_workbook *self, const char *sheetname)
     init_data.first_sheet = &self->first_sheet;
     init_data.tmpdir = self->options.tmpdir;
     init_data.default_url_format = self->default_url_format;
+    init_data.checkbox_format = self->checkbox_format;
     init_data.max_url_length = self->max_url_length;
     init_data.use_1904_epoch = self->use_1904_epoch;
 
@@ -2085,7 +2092,7 @@ workbook_add_chartsheet(lxw_workbook *self, const char *sheetname)
     lxw_chartsheet_name *chartsheet_name = NULL;
     lxw_error error;
     lxw_worksheet_init_data init_data =
-        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     char *new_name = NULL;
 
     if (sheetname) {
@@ -2247,6 +2254,9 @@ workbook_close(lxw_workbook *self)
             self->has_metadata = LXW_TRUE;
             self->has_embedded_images = LXW_TRUE;
         }
+
+        if (worksheet->has_checkboxes)
+            self->has_feature_property_bags = LXW_TRUE;
     }
 
     /* Set workbook and worksheet VBA codenames if a macro has been added. */

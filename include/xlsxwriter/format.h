@@ -437,6 +437,7 @@ typedef struct lxw_format {
     uint8_t font_only;
 
     uint8_t quote_prefix;
+    uint8_t checkbox;
 
     STAILQ_ENTRY (lxw_format) list_pointers;
 } lxw_format;
@@ -1343,6 +1344,7 @@ void format_set_theme(lxw_format *format, uint8_t value);
 void format_set_hyperlink(lxw_format *format);
 void format_set_color_indexed(lxw_format *format, uint8_t value);
 void format_set_font_only(lxw_format *format);
+void format_set_checkbox(lxw_format *format);
 
 /* Declarations required for unit testing. */
 #ifdef TESTING

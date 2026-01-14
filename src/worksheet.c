@@ -293,6 +293,7 @@ lxw_worksheet_new(lxw_worksheet_init_data *init_data)
         worksheet->active_sheet = init_data->active_sheet;
         worksheet->first_sheet = init_data->first_sheet;
         worksheet->default_url_format = init_data->default_url_format;
+        worksheet->checkbox_format = init_data->checkbox_format;
         worksheet->max_url_length = init_data->max_url_length;
         worksheet->use_1904_epoch = init_data->use_1904_epoch;
     }
@@ -8313,6 +8314,30 @@ worksheet_write_boolean(lxw_worksheet *self,
     cell = _new_boolean_cell(row_num, col_num, value, format);
 
     _insert_cell(self, row_num, col_num, cell);
+
+    return LXW_NO_ERROR;
+}
+
+/*
+ * Insert a checkbox into a cell.
+ */
+lxw_error
+worksheet_insert_checkbox(lxw_worksheet *self,
+                          lxw_row_t row_num, lxw_col_t col_num, int value)
+{
+    lxw_cell *cell;
+    lxw_error err;
+
+    err = _check_dimensions(self, row_num, col_num, LXW_FALSE, LXW_FALSE);
+    if (err)
+        return err;
+
+    cell = _new_boolean_cell(row_num, col_num, value ? 1 : 0,
+                             self->checkbox_format);
+
+    _insert_cell(self, row_num, col_num, cell);
+
+    self->has_checkboxes = LXW_TRUE;
 
     return LXW_NO_ERROR;
 }

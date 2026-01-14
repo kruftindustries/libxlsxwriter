@@ -2254,12 +2254,14 @@ typedef struct lxw_worksheet {
 
     lxw_drawing *drawing;
     lxw_format *default_url_format;
+    lxw_format *checkbox_format;
 
     uint8_t has_vml;
     uint8_t has_comments;
     uint8_t has_header_vml;
     uint8_t has_background_image;
     uint8_t has_buttons;
+    uint8_t has_checkboxes;
     uint8_t storing_embedded_image;
     lxw_rel_tuple *external_vml_comment_link;
     lxw_rel_tuple *external_comment_link;
@@ -2319,6 +2321,7 @@ typedef struct lxw_worksheet_init_data {
     const char *quoted_name;
     const char *tmpdir;
     lxw_format *default_url_format;
+    lxw_format *checkbox_format;
     uint16_t max_url_length;
     uint8_t use_1904_epoch;
 
@@ -2942,6 +2945,25 @@ lxw_error worksheet_write_url_opt(lxw_worksheet *worksheet,
 lxw_error worksheet_write_boolean(lxw_worksheet *worksheet,
                                   lxw_row_t row, lxw_col_t col,
                                   int value, lxw_format *format);
+
+/**
+ * @brief Write a checkbox to a worksheet cell.
+ *
+ * @param worksheet Pointer to a lxw_worksheet instance to be updated.
+ * @param row       The zero indexed row number.
+ * @param col       The zero indexed column number.
+ * @param value     The checkbox state: 0 = unchecked, non-zero = checked.
+ *
+ * @return A #lxw_error code.
+ *
+ * Insert a checkbox into a worksheet cell.
+ *
+ * Note: Checkbox is a feature introduced in Excel 365 and may not work
+ * in older versions of Excel.
+ *
+ */
+lxw_error worksheet_insert_checkbox(lxw_worksheet *worksheet,
+                                    lxw_row_t row, lxw_col_t col, int value);
 
 /**
  * @brief Write a formatted blank worksheet cell.
