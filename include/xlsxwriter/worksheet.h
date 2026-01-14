@@ -821,6 +821,7 @@ STAILQ_HEAD(lxw_cond_format_list, lxw_cond_format_obj);
 STAILQ_HEAD(lxw_image_props, lxw_object_properties);
 STAILQ_HEAD(lxw_embedded_image_props, lxw_object_properties);
 STAILQ_HEAD(lxw_chart_props, lxw_object_properties);
+STAILQ_HEAD(lxw_textbox_props, lxw_object_properties);
 STAILQ_HEAD(lxw_comment_objs, lxw_vml_obj);
 STAILQ_HEAD(lxw_table_objs, lxw_table_obj);
 
@@ -1814,6 +1815,8 @@ typedef struct lxw_object_properties {
     char *image_position;
     uint8_t decorative;
     lxw_format *format;
+    char *text;
+    uint8_t is_textbox;
 
     STAILQ_ENTRY (lxw_object_properties) list_pointers;
 } lxw_object_properties;
@@ -2129,6 +2132,7 @@ typedef struct lxw_worksheet {
     struct lxw_image_props *image_props;
     struct lxw_image_props *embedded_image_props;
     struct lxw_chart_props *chart_data;
+    struct lxw_textbox_props *textbox_data;
     struct lxw_drawing_rel_ids *drawing_rel_ids;
     struct lxw_vml_drawing_rel_ids *vml_drawing_rel_ids;
     struct lxw_comment_objs *comment_objs;
@@ -2286,6 +2290,8 @@ typedef struct lxw_worksheet {
     char *ignore_two_digit_text_year;
 
     uint8_t use_1904_epoch;
+
+    uint8_t has_textboxes;
 
     uint16_t excel_version;
 
@@ -4057,6 +4063,22 @@ lxw_error worksheet_insert_chart_opt(lxw_worksheet *worksheet,
                                      lxw_row_t row, lxw_col_t col,
                                      lxw_chart *chart,
                                      lxw_chart_options *user_options);
+
+/**
+ * @brief Insert a textbox object into a worksheet.
+ *
+ * @param worksheet Pointer to a lxw_worksheet instance to be updated.
+ * @param row       The zero indexed row number.
+ * @param col       The zero indexed column number.
+ * @param text      The text string to display in the textbox.
+ *
+ * @return A #lxw_error code.
+ *
+ * This function can be used to insert a textbox into a worksheet.
+ */
+lxw_error worksheet_insert_textbox(lxw_worksheet *worksheet,
+                                   lxw_row_t row, lxw_col_t col,
+                                   const char *text);
 
 /**
  * @brief Merge a range of cells.
